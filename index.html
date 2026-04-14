@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FAS-ICP AGEING REPORT</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- ✅ FIXED: Styled Excel Export (xlsx-js-style) -->
+ <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.min.js"></script>
+
+
+  <style>
+    /* ================= HEADER ================= */
+    .fas-header{
+      height:160px;width:100%;
+      display:flex;align-items:center;justify-content:center;
+      background:
+        repeating-linear-gradient(45deg, rgba(255,255,255,.05) 0 1px, transparent 1px 18px),
+        repeating-linear-gradient(-45deg, rgba(0,0,0,.25) 0 1px, transparent 1px 18px),
+        linear-gradient(145deg,#0a4ecb,#003a8f);
+      box-shadow: inset 2px 2px 6px rgba(255,255,255,.25), inset -4px -4px 12px rgba(0,0,0,.55);
+      background-position:0 0;
+      animation:fasMove 80s linear infinite;
+    }
+    @keyframes fasMove{ from{background-position:0 0;} to{background-position:900px 900px;} }
+    .fas-header-inner{width:90%;max-width:1200px}
+    .fas-title-box{
+      height:90px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      background:linear-gradient(to bottom, rgba(255,255,255,.18), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.35);
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.4), 0 6px 14px rgba(0,0,0,.45);
+    }
+    .fas-title-text{
+      color:#fff;font-size:40px;font-weight:900;letter-spacing:6px;
+      text-shadow:0 2px 4px rgba(0,0,0,.6);text-align:center;
+    }
+
+    :root{--blue:#003a8f;--bg:#f4f6fb}
+    body{margin:0;font-family:Arial;background:var(--bg)}
+    .container{max-width:1400px;margin:auto;padding:20px}
+
+    /* ================= CONTROLS ================= */
+    .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:18px 0}
+    .controls input[type="file"]{
+      padding:10px 14px;border-radius:10px;background:linear-gradient(#1e63d6,#003a8f);
+      color:#fff;font-weight:700;border:none;box-shadow:0 4px 10px rgba(0,0,0,.25);
+    }
+    .controls select,.controls button{
+      padding:10px 18px;border-radius:10px;background:linear-gradient(#1e63d6,#003a8f);
+      color:#fff;font-weight:800;font-size:12px;border:none;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.25);
+    }
+    .controls select:hover,.controls button:hover{background:linear-gradient(#2b78ff,#004ab8)}
+
+    /* Month filter readability */
+    #monthFilter { font-size:13px; letter-spacing:0.5px; }
+    #monthFilter option { background:#ffffff; color:#003a8f; font-weight:700; }
+    #monthFilter:focus { outline:none; box-shadow:0 0 0 3px rgba(30,99,214,.35); }
+
+    /* ================= SUMMARY ================= */
+    .summary{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:12px;margin-bottom:16px;
+    }
+    .box{background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+    .box h4{margin:0;color:#6b7280;font-size:12px}
+    .box div{margin-top:6px;font-size:26px;font-weight:700;color:#003a8f}
+
+    /* ================= TABLE ================= */
+    .table-wrap{background:#fff;border-radius:10px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.1)}
+    table{border-collapse:collapse;width:100%;min-width:1200px;font-size:12px}
+    th,td{border:1px solid #d1d5db;padding:6px;text-align:center}
+    th{background:#e6eef9;position:sticky;top:0;color:#111827}
+    td{color:#111827}
+
+    /* Status pill */
+    .status-pill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-weight:900;
+      letter-spacing:.5px;
+      font-size:11px;
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+    .status-pill.open{background:#ffe1e1;color:#b00020}
+    .status-pill.closed{background:#dff7e6;color:#0b6b2e}
+
+    /* Month tint rows */
+    tr.m-01{ background:#eef6ff; }
+    tr.m-02{ background:#f1edff; }
+    tr.m-03{ background:#e9fff4; }
+    tr.m-04{ background:#fff8e6; }
+    tr.m-05{ background:#fff0e8; }
+    tr.m-06{ background:#ffe9f2; }
+    tr.m-07{ background:#eefcfb; }
+    tr.m-08{ background:#f7f7f7; }
+    tr.m-09{ background:#f0f7ff; }
+    tr.m-10{ background:#f8f0ff; }
+    tr.m-11{ background:#effff1; }
+    tr.m-12{ background:#fff3f3; }
+
+    /* ================= CALCULATOR (FULL BLUE DESIGN) ================= */
+    .hidden{display:none}
+
+    #calcPanel{
+      border-radius:14px;
+      padding:14px;
+      background: linear-gradient(160deg,#1f6fdc 0%, #0b4aa8 60%, #04327a 100%);
+      box-shadow: 0 18px 36px rgba(0,0,0,.35);
+      margin-bottom:16px;
+    }
+
+    .calc-header{
+      position:relative;
+      background: linear-gradient(180deg,#2b7bff,#003a8f);
+      border-radius:14px;
+      padding:16px;
+      margin-bottom:14px;
+      text-align:center;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.25);
+    }
+
+    .calc-title{
+      margin:0;
+      color:#ffffff;
+      font-size:20px;
+      font-weight:1000;
+      letter-spacing:1px;
+    }
+
+    .calc-close-btn{
+      position:absolute;
+      right:12px;
+      top:12px;
+      padding:8px 16px;
+      border-radius:12px;
+      border:none;
+      background:linear-gradient(180deg,#3385ff,#004ab8);
+      color:#ffffff;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(0,0,0,.35);
+    }
+    .calc-close-btn:hover{filter:brightness(1.08)}
+
+    .calcGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+
+    #calcPanel .card.flat{
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius:14px;
+      color:#f8fbff;
+      box-shadow: 0 18px 36px rgba(0,0,0,.22);
+      padding:14px;
+      text-align:center;
+      backdrop-filter: blur(4px);
+    }
+
+    #calcPanel h4{
+      color:#ffffff;
+      font-size:13px;
+      letter-spacing:.7px;
+      margin:0 0 10px;
+    }
+
+    #calcPanel label{
+      display:block;
+      color:#e5efff;
+      font-size:12px;
+      font-weight:800;
+      margin-top:10px;
+    }
+
+    #calcPanel input{
+      width:90%;
+      max-width:260px;
+      background:#ffffff;
+      color:#0b4aa8;
+      font-weight:900;
+      font-size:14px;
+      border-radius:14px;
+      border:none;
+      padding:10px 12px;
+      text-align:center;
+      margin-top:6px;
+      box-shadow:0 6px 18px rgba(0,0,0,.25);
+    }
+
+    #calcPanel .hint{
+      color:#dbeafe;
+      font-size:11px;
+      margin-top:8px;
+    }
+
+    #calcPanel .kpi{
+      background: rgba(255,255,255,.16);
+      border-radius: 14px;
+      padding: 12px;
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.16);
+    }
+
+    #calcPanel .kpi b{
+      color:#ffffff;
+      font-size:22px;
+      font-weight:1000;
+    }
+
+    .calc-instruction{
+      margin-top:12px;
+      padding:10px 14px;
+      background:#ffffff;
+      color:#0b4aa8;
+      font-size:12px;
+      font-style:italic;
+      font-weight:800;
+      border-radius:14px;
+      text-align:center;
+      box-shadow:0 8px 18px rgba(0,0,0,.25);
+    }
+
+    .calc-savings-main{
+      background: linear-gradient(180deg, #2b7bff, #003a8f);
+      border-radius: 18px;
+      padding: 16px;
+      margin-top:14px;
+      box-shadow:0 12px 26px rgba(0,0,0,.35);
+    }
+    .calc-savings-main .label{ color:#e0ecff; font-weight:900 }
+    .calc-savings-main .value{ color:#ffffff; font-size:34px; font-weight:1000 }
+
+    .calc-savings-sub{
+      background: rgba(255,255,255,.14);
+      border-radius: 16px;
+      padding: 14px;
+      border:1px solid rgba(255,255,255,.18);
+    }
+    .calc-savings-sub .label{ color:#c7dcff; font-weight:900 }
+    .calc-savings-sub .value{ color:#ffffff; font-size:20px; font-weight:1000 }
+
+    .calc-reset-btn{
+      width:100%;
+      margin-top:14px;
+      padding:14px;
+      border-radius:16px;
+      font-size:16px;
+      font-weight:1000;
+      color:#fff;
+      border:none;
+      cursor:pointer;
+      background:linear-gradient(180deg,#3385ff,#004ab8);
+      box-shadow:0 10px 24px rgba(0,0,0,.35);
+    }
+    .calc-reset-btn:hover{filter:brightness(1.08)}
+
+/* ===== DASHBOARD: Desktop 4 columns (2 rows), Mobile 1 column ===== */
+.dash4{
+  margin:12px 0 16px;
+}
+
+.dash4-grid{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);  /* ✅ 4 columns desktop */
+  gap:14px;                                /* not too wide */
+}
+
+/* card sizing - smaller, not oversized */
+.dash4-card{
+  background:#ffffff;
+  border-radius:14px;                      /* smaller radius */
+  padding:14px 12px;                       /* smaller padding */
+  border:1px solid rgba(15,23,42,.06);
+  box-shadow:0 10px 22px rgba(0,0,0,.10);
+  text-align:center;
+  min-height:92px;                         /* not too tall */
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.dash4-title{
+  font-size:11px;
+  font-weight:900;
+  color:#64748b;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+}
+
+.dash4-value{
+  margin-top:8px;
+  font-size:34px;                          /* smaller number */
+  font-weight:1000;
+  color:#1e3a8a;
+}
+
+/* Top-left: text only */
+.dash4-titleOnly .dash4-titleBig{
+  font-size:22px;                          /* smaller than before */
+  font-weight:1100;
+  color:#1e3a8a;
+  letter-spacing:.8px;
+  line-height:1.05;
+}
+
+/* Green value: number only */
+.dash4-greenOnly .dash4-greenValue{
+  font-size:60px;                          /* smaller green number */
+  font-weight:1200;
+  color:#22c55e;
+  letter-spacing:1px;
+}
+
+/* ✅ Mobile: 1 column only */
+@media (max-width: 720px){
+  .dash4-grid{
+    grid-template-columns: 1fr;
+  }
+}
+/* ===========================
+   CALCULATOR: ONE ROW (DESKTOP)
+   =========================== */
+#calcPanel .calcGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(260px, 1fr));
+  /* 4 cards in one row */
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* Make cards same height */
+#calcPanel .card.flat {
+  height: 100%;
+}
+
+/* Responsive: tablet -> 2 columns */
+@media (max-width: 1200px) {
+  #calcPanel .calcGrid {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+  }
+}
+
+/* Mobile -> 1 column */
+@media (max-width: 650px) {
+  #calcPanel .calcGrid {
+    grid-template-columns: 1fr;
+  }
+}
+  </style>
+</head>
+
+<body>
+  <header class="fas-header">
+    <div class="fas-header-inner">
+      <div class="fas-title-box">
+        <div class="fas-title-text">FAS-ICP AGEING REPORT</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- ✅ CONTROLS (UPLOAD / EXPORT / CLEAR / CALCULATOR) -->
+    <div class="controls">
+      <input type="file" id="fileInput" />
+
+      <select id="monthFilter">
+        <option value="ALL">ALL MONTHS</option>
+      </select>
+
+      <select id="statusFilter">
+        <option value="ALL">ALL STATUS</option>
+        <option value="OPEN">OPEN</option>
+        <option value="CLOSED">CLOSED</option>
+      </select>
+
+      <button type="button" id="btnExport">Export</button>
+      <button type="button" id="btnClear">Clear</button>
+      <button type="button" id="btnCalc">Calculator</button>
+    </div>
+
+<!-- ✅ DASHBOARD (Desktop 4 columns / 2 rows, Mobile 1 column) -->
+<section class="dash4">
+  <div class="dash4-grid">
+
+    <!-- ROW 1 -->
+    <div class="dash4-card dash4-titleOnly">
+      <div class="dash4-titleBig">AVERAGE AGEING<br/>DAYS</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">TOTAL OPEN LINE ITEMS</div>
+      <div class="dash4-value" id="openCnt">0</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">TOTAL CLOSED LINE ITEMS</div>
+      <div class="dash4-value" id="closedCnt">0</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">0–30 DAYS</div>
+      <div class="dash4-value" id="b30">0</div>
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="dash4-card dash4-greenOnly">
+      <div class="dash4-greenValue" id="avgAge">0</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">% OPEN</div>
+      <div class="dash4-value" id="openPct">0%</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">% CLOSED</div>
+      <div class="dash4-value" id="closedPct">0%</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">31–60 DAYS</div>
+      <div class="dash4-value" id="b60">0</div>
+    </div>
+
+  </div>
+</section>
+
+
+
+    <!-- ✅ CALCULATOR PANEL -->
+    <section class="hidden" id="calcPanel">
+      <div class="calc-header">
+        <h3 class="calc-title">COSTING &amp; SAVINGS CALCULATOR</h3>
+        <button class="calc-close-btn" id="btnCalcClose">Close</button>
+      </div>
+
+      <div class="calcGrid">
+
+        <div class="card flat">
+          <h4>INPUTS</h4>
+
+          <label>Hourly Rate (₱/hour)</label>
+          <input type="number" id="hourlyRate" value="150">
+
+          <label>Report Frequency (reports / month)</label>
+          <input type="number" id="reportsPerMonth" value="1">
+
+          <label>User Count</label>
+          <input type="number" id="userCount" value="1">
+
+          <div class="calc-instruction">
+            Edit hourly rate, step timings, and report frequency (per month)
+          </div>
+
+          <div class="hint">Tip: Change any value; results update automatically</div>
+        </div>
+
+        <div class="card flat">
+          <h4>MANUAL TIME PER PROCEDURE (minutes)</h4>
+
+          <label>MB51 Generate + Export File</label>
+          <input type="number" id="m_mb2" value="2">
+
+          <label>Filtering (103 / 104 / 105 + Users)</label>
+          <input type="number" id="m_filter" value="10">
+
+          <label>Matching (103 vs 105)</label>
+          <input type="number" id="m_match" value="10">
+
+          <label>Formatting / Finalizing</label>
+          <input type="number" id="m_format" value="15">
+
+          <div class="kpi">
+            <h4>Total Manual Minutes</h4>
+            <b id="manualTotalMin">0</b>
+          </div>
+        </div>
+
+        <div class="card flat">
+          <h4>WEB-BASED TIME PER PROCEDURE (minutes)</h4>
+
+          <label>MB51 Generate + Export (SAP)</label>
+          <input type="number" id="w_mb2" value="2">
+
+          <label>Upload + Validation + Compute</label>
+          <input type="number" id="w_compute" value="0.1">
+
+          <label>Filtering / Review</label>
+          <input type="number" id="w_review" value="0.1">
+
+          <label>Excel Export</label>
+          <input type="number" id="w_export" value="0.1">
+
+          <div class="kpi">
+            <h4>Total Web Minutes</h4>
+            <b id="webTotalMin">0</b>
+          </div>
+        </div>
+
+        <div class="card flat">
+          <h4>RESULTS</h4>
+
+          <div class="hint">Cost per minute: <b id="costPerMin">₱0.00</b></div>
+          <div class="hint">Manual cost / report: <b id="manualCost">₱0.00</b></div>
+          <div class="hint">Web cost / report: <b id="webCost">₱0.00</b></div>
+
+          <div class="calc-savings-main">
+            <div class="label">Savings / Report</div>
+            <div class="value" id="savePerReport">₱0.00</div>
+          </div>
+
+          <div class="summary" style="margin-top:12px">
+            <div class="calc-savings-sub">
+              <div class="label">Monthly Savings</div>
+              <div class="value" id="saveMonthly">₱0.00</div>
+            </div>
+            <div class="calc-savings-sub">
+              <div class="label">Yearly Savings</div>
+              <div class="value" id="saveYearly">₱0.00</div>
+            </div>
+          </div>
+
+          <button class="calc-reset-btn" id="btnResetCalc">Reset Defaults</button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ✅ TABLE -->
+    <div class="table-wrap">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Plant</th>
+            <th>Purchase order</th>
+            <th>Material</th>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>UoM</th>
+            <th>Material Document (103)</th>
+            <th>Posting Date (103)</th>
+            <th>Material Document (105)</th>
+            <th>Posting Date (105)</th>
+            <th>Age</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+  </div><!-- /container -->
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    function toDate(v){
+      if (!v) return null;
+      if (typeof v === "number") return new Date((v - 25569) * 86400000);
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const monthKey = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+
+    function col(r, names){
+      for (const n of names) if (r[n] !== undefined && r[n] !== "") return r[n];
+      const map = {};
+      Object.keys(r).forEach(k => map[k.trim().toUpperCase()] = k);
+      for (const n of names){
+        const real = map[n.trim().toUpperCase()];
+        if (real && r[real] !== undefined && r[real] !== "") return r[real];
+      }
+      return "";
+    }
+
+    let GR103 = [], GR104 = [], GR105 = [];
+
+    function has104(r103){
+      const d103 = toDate(r103["Posting Date"]);
+      if (!d103) return false;
+      return GR104.some(r104 =>
+        r104["Plant"] === r103["Plant"] &&
+        r104["Purchase order"] === r103["Purchase order"] &&
+        r104["Material"] === r103["Material"] &&
+        toDate(r104["Posting Date"]) >= d103
+      );
+    }
+
+    function match105(r){
+      const d103 = toDate(r["Posting Date"]);
+      if (!d103) return null;
+      return GR105
+        .filter(x =>
+          x["Plant"] === r["Plant"] &&
+          x["Purchase order"] === r["Purchase order"] &&
+          x["Material"] === r["Material"] &&
+          toDate(x["Posting Date"]) >= d103
+        )
+        .sort((a,b) => toDate(a["Posting Date"]) - toDate(b["Posting Date"]))[0] || null;
+    }
+
+    function buildMonthFilter(){
+      const keys = [...new Set(GR103.map(r => {
+        const d = toDate(r["Posting Date"]);
+        return d ? monthKey(d) : null;
+      }).filter(Boolean))].sort();
+
+      $("monthFilter").innerHTML =
+        '<option value="ALL">ALL MONTHS</option>' +
+        keys.map(k => {
+          const [y, mm] = k.split("-");
+          const label = new Date(Number(y), Number(mm) - 1, 1)
+            .toLocaleString("default", { month: "long", year: "numeric" });
+          return `<option value="${k}">${label}</option>`;
+        }).join("");
+    }
+
+    function compute(){
+      const tb = document.querySelector("#tbl tbody");
+      if (!tb) return;
+      tb.innerHTML = "";
+
+      let open=0, closed=0, cnt=0, b30=0, b60=0, totalAge=0;
+      const today = new Date();
+
+      const selMonth  = $("monthFilter").value;
+      const selStatus = $("statusFilter").value;
+
+      const list = [];
+
+      GR103.forEach(r => {
+        if (has104(r)) return;
+        const d103 = toDate(r["Posting Date"]);
+        if (!d103) return;
+
+        const mKey = monthKey(d103);
+        if (selMonth !== "ALL" && selMonth !== mKey) return;
+
+        const r105 = match105(r);
+        const d105 = r105 ? toDate(r105["Posting Date"]) : null;
+
+        const age = Math.floor(((d105 || today) - d103) / 86400000);
+        const status = r105 ? "CLOSED" : "OPEN";
+        if (selStatus !== "ALL" && selStatus !== status) return;
+
+        list.push({ r, d103, r105, d105, age, status, mIdx: d103.getMonth()+1 });
+      });
+
+      list.sort((a,b) => a.d103 - b.d103);
+
+      list.forEach(item => {
+        const { r, d103, r105, d105, age, status, mIdx } = item;
+        cnt++; totalAge += age;
+        if (status === "OPEN") open++; else closed++;
+        if (age <= 30) b30++; else if (age <= 60) b60++;
+
+        const mClass = "m-" + String(mIdx).padStart(2, "0");
+
+        tb.insertAdjacentHTML("beforeend", `
+          <tr class="${mClass}">
+            <td>${r["Plant"] ?? ""}</td>
+            <td>${r["Purchase order"] ?? ""}</td>
+            <td>${r["Material"] ?? ""}</td>
+            <td style="text-align:left">${col(r, ["Material Description","Description","Short Text"])}</td>
+            <td>${col(r, ["Qty in unit of entry","Quantity","Qty","Qty in UnE"])}</td>
+            <td>${col(r, ["Unit of Entry","UoM","Base Unit of Measure","Unit"])}</td>
+            <td>${r["Material Document"] ?? ""}</td>
+            <td>${d103 ? d103.toLocaleDateString() : ""}</td>
+            <td>${r105?.["Material Document"] || ""}</td>
+            <td>${d105 ? d105.toLocaleDateString() : ""}</td>
+            <td>${age}</td>
+            <td><span class="status-pill ${status==="OPEN"?"open":"closed"}">${status}</span></td>
+          </tr>
+        `);
+      });
+
+      $("openCnt").textContent = open;
+      $("closedCnt").textContent = closed;
+      $("openPct").textContent = cnt ? Math.round(open/cnt*100) + "%" : "0%";
+      $("closedPct").textContent = cnt ? Math.round(closed/cnt*100) + "%" : "0%";
+      $("b30").textContent = b30;
+      $("b60").textContent = b60;
+      $("avgAge").textContent = cnt ? (totalAge/cnt).toFixed(2) : "0";
+    }
+
+   function exportExcelStyled(){
+  if (typeof XLSX === "undefined") {
+    alert("XLSX library not loaded. Check the script src link.");
+    return;
+  }
+
+  const rows = document.querySelectorAll("#tbl tbody tr");
+  if (!rows.length) { alert("No data to export"); return; }
+
+  const headers = [...document.querySelectorAll("#tbl thead th")].map(th => th.innerText.trim());
+  const body = [...rows].map(tr => [...tr.children].map(td => td.innerText.trim()));
+  const avg = Number($("avgAge").textContent) || 0;
+
+  // Find AGE column (0-based), fallback 10
+  const AGE_COL = (() => {
+    const idx = headers.findIndex(h => String(h).toUpperCase().includes("AGE"));
+    return idx >= 0 ? idx : 10;
+  })();
+
+  const borderThin = {
+    top: {style:"thin",color:{rgb:"FF9CA3AF"}},
+    bottom:{style:"thin",color:{rgb:"FF9CA3AF"}},
+    left:{style:"thin",color:{rgb:"FF9CA3AF"}},
+    right:{style:"thin",color:{rgb:"FF9CA3AF"}}
+  };
+
+  const headerStyle = {
+    font:{name:"Calibri",sz:11,bold:true,color:{rgb:"FFFFFFFF"}},
+    fill:{ patternType:"solid", fgColor:{ rgb:"FF1F4E79" } },
+    alignment:{horizontal:"center",vertical:"center",wrapText:true},
+    border:borderThin
+  };
+
+  const cellCenter = {
+    font:{name:"Calibri",sz:11},
+    alignment:{horizontal:"center",vertical:"center",wrapText:true},
+    border:borderThin
+  };
+
+  const cellLeft = {
+    font:{name:"Calibri",sz:11},
+    alignment:{horizontal:"left",vertical:"center",wrapText:true},
+    border:borderThin
+  };
+
+  const dateStyle = { ...cellCenter, numFmt:"m/d/yyyy" };
+
+  const openStyle = {
+    ...cellCenter,
+    font:{name:"Calibri",sz:11,bold:true,color:{rgb:"FFB00020"}},
+    fill:{patternType:"solid", fgColor:{rgb:"FFFFE1E1"}}
+  };
+
+  const closedStyle = {
+    ...cellCenter,
+    font:{name:"Calibri",sz:11,bold:true,color:{rgb:"FF0B6B2E"}},
+    fill:{patternType:"solid", fgColor:{rgb:"FFDFF7E6"}}
+  };
+
+  // Title style (Row 1)
+  const titleStyle = {
+    font:{ name:"Calibri", sz:20, bold:true, color:{ rgb:"FFFFFFFF" } },
+    alignment:{ horizontal:"center", vertical:"center" },
+    fill:{ patternType:"solid", fgColor:{ rgb:"FF0B56D6" } }
+  };
+
+  // Footer styles (like screenshot)
+  const footerBorder = {
+    top:    { style:"medium", color:{ rgb:"FF0B2E69" } },
+    bottom: { style:"thin",   color:{ rgb:"FF9CA3AF" } },
+    left:   { style:"thin",   color:{ rgb:"FF9CA3AF" } },
+    right:  { style:"thin",   color:{ rgb:"FF9CA3AF" } }
+  };
+
+  const footerLabelStyle = {
+    font:{ name:"Calibri", sz:14, bold:true, color:{ rgb:"FFFFFFFF" } },
+    fill:{ patternType:"solid", fgColor:{ rgb:"FF0B56D6" } },
+    alignment:{ horizontal:"right", vertical:"center" }, // ✅ right alignment
+    border: footerBorder
+  };
+
+  const footerValueStyle = {
+    font:{ name:"Calibri", sz:18, bold:true, color:{ rgb:"FF0B2E69" } },
+    fill:{ patternType:"solid", fgColor:{ rgb:"FFFFF2CC" } },
+    alignment:{ horizontal:"center", vertical:"center" },
+    numFmt:"0.00",
+    border: footerBorder
+  };
+
+  const parseMDY = (s) => {
+    if (!s) return null;
+    const p = String(s).trim().split("/");
+    if (p.length !== 3) return null;
+    const m = parseInt(p[0],10), d = parseInt(p[1],10), y = parseInt(p[2],10);
+    if (!m || !d || !y) return null;
+    const dt = new Date(y, m-1, d);
+    return isNaN(dt.getTime()) ? null : dt;
+  };
+
+  const monthFill = [
+    "FFEEF6FF","FFF1EDFF","FFE9FFF4","FFFFF8E6","FFFFF0E8","FFFFE9F2",
+    "FFEEFCFB","FFF7F7F7","FFF0F7FF","FFF8F0FF","FFEFFFF1","FFFFF3F3"
+  ];
+
+  const aoa = [];
+
+  // ✅ Row 1: Title (merged)
+  const titleRow = new Array(headers.length).fill({ v:"", t:"s", s:titleStyle });
+  titleRow[0] = { v:"FAS-ICP AGEING REPORT", t:"s", s:titleStyle };
+  aoa.push(titleRow);
+
+  // ✅ Row 2: Table headers DIRECTLY (so rows 2–6 removed)
+  aoa.push(headers.map(h => ({ v:h, t:"s", s:headerStyle })));
+
+  // ✅ Data rows
+  body.forEach(r => {
+    const out = r.map((val,c) => {
+      const base = (c === 3) ? cellLeft : cellCenter;
+
+      // numeric for Qty & Age
+      if ((c === 4 || c === 10) && val !== "" && !isNaN(Number(val)))
+        return { v:Number(val), t:"n", s:base };
+
+      // Dates at c=7 and c=9
+      if ((c === 7 || c === 9) && val){
+        const dt = parseMDY(val);
+        if (dt){
+          if (c === 7){
+            const mf = monthFill[dt.getMonth()];
+            return { v:dt, t:"d", s:{ ...dateStyle, fill:{patternType:"solid", fgColor:{rgb:mf}} } };
+          }
+          return { v:dt, t:"d", s:dateStyle };
+        }
+      }
+
+      // Status at c=11
+      if (c === 11){
+        const st = String(val).toUpperCase();
+        return { v:val, t:"s", s:(st === "OPEN" ? openStyle : closedStyle) };
+      }
+
+      return { v:val, t:"s", s:base };
+    });
+    aoa.push(out);
+  });
+
+  // ✅ Spacer row before footer
+  aoa.push(new Array(headers.length).fill({ v:"", t:"s", s:cellCenter }));
+
+  // ✅ Footer row
+  const footerRowIndex = aoa.length;
+  const footerRow = new Array(headers.length).fill({ v:"", t:"s", s:cellCenter });
+
+  // Put label in TOP-LEFT of blue merged block (col 0) so it shows
+  footerRow[0] = { v:"AVERAGING DAYS", t:"s", s:footerLabelStyle };
+  for (let c = 1; c < AGE_COL; c++) footerRow[c] = { v:"", t:"s", s:footerLabelStyle };
+
+  footerRow[AGE_COL] = { v:avg, t:"n", s:footerValueStyle };
+  for (let c = AGE_COL + 1; c < headers.length; c++) footerRow[c] = { v:"", t:"s", s:footerValueStyle };
+
+  aoa.push(footerRow);
+
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+
+  // Column widths
+  ws["!cols"] = [
+    {wch:8},{wch:14},{wch:16},{wch:45},{wch:10},{wch:10},
+    {wch:18},{wch:12},{wch:18},{wch:12},{wch:8},{wch:12}
+  ];
+
+  // Row heights
+  ws["!rows"] = ws["!rows"] || [];
+  ws["!rows"][0] = { hpt: 35 }; // title
+  
+  ws["!rows"][1] = { hpt: 30 }; // ✅ Row 2 header height = 30
+
+  ws["!rows"][footerRowIndex] = { hpt: 28 }; // footer
+
+  // Merges
+  ws["!merges"] = ws["!merges"] || [];
+  ws["!merges"].push({ s:{r:0,c:0}, e:{r:0,c:headers.length-1} }); // title merged
+
+  // Footer merges (2 blocks)
+  ws["!merges"].push({ s:{r:footerRowIndex,c:0}, e:{r:footerRowIndex,c:AGE_COL-1} });
+  ws["!merges"].push({ s:{r:footerRowIndex,c:AGE_COL}, e:{r:footerRowIndex,c:headers.length-1} });
+
+  // Autofilter on Row 2 (table header row) => Excel row 2
+  const lastColLetter = String.fromCharCode(65 + headers.length - 1);
+  ws["!autofilter"] = { ref:`A2:${lastColLetter}2` };
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "AGEING");
+  XLSX.writeFile(wb, "FAS_ICP_AGEING_REPORT_STYLED.xlsx");
+}
+
+
+    function clearAgeing(){
+      $("fileInput").value = "";
+      document.querySelector("#tbl tbody").innerHTML = "";
+      $("avgAge").textContent="0";
+      $("openCnt").textContent="0";
+      $("closedCnt").textContent="0";
+      $("openPct").textContent="0%";
+      $("closedPct").textContent="0%";
+      $("b30").textContent="0";
+      $("b60").textContent="0";
+      GR103=[]; GR104=[]; GR105=[];
+      $("monthFilter").innerHTML = '<option value="ALL">ALL MONTHS</option>';
+      $("monthFilter").value = "ALL";
+      $("statusFilter").value = "ALL";
+    }
+
+    /* ========== CALCULATOR ========== */
+    function peso(x){
+      return "₱" + (Number(x)||0).toLocaleString("en-PH",{
+        minimumFractionDigits:2, maximumFractionDigits:2
+      });
+    }
+
+    function computeSavings(){
+      const hourly = Number($("hourlyRate").value) || 0;
+      const rpm = Number($("reportsPerMonth").value) || 0;
+      const users = Number($("userCount").value) || 1;
+
+      const manualMin =
+        Number($("m_mb2").value) +
+        Number($("m_filter").value) +
+        Number($("m_match").value) +
+        Number($("m_format").value);
+
+      const webMin =
+        Number($("w_mb2").value) +
+        Number($("w_compute").value) +
+        Number($("w_review").value) +
+        Number($("w_export").value);
+
+      const costPerMin = hourly / 60;
+
+      $("manualTotalMin").textContent = manualMin.toFixed(1);
+      $("webTotalMin").textContent = webMin.toFixed(1);
+
+      $("costPerMin").textContent = peso(costPerMin);
+      $("manualCost").textContent = peso(manualMin * costPerMin);
+      $("webCost").textContent = peso(webMin * costPerMin);
+
+      const savePerReport = (manualMin - webMin) * costPerMin;
+      $("savePerReport").textContent = peso(savePerReport);
+
+      const monthly = savePerReport * rpm * users;
+      const yearly = monthly * 12;
+      $("saveMonthly").textContent = peso(monthly);
+      $("saveYearly").textContent = peso(yearly);
+    }
+
+    function toggleCalculator(force){
+      const panel = $("calcPanel");
+      if (!panel) return;
+      if (force === true) panel.classList.remove("hidden");
+      else if (force === false) panel.classList.add("hidden");
+      else panel.classList.toggle("hidden");
+    }
+
+    function resetCalc(){
+      $("hourlyRate").value = 150;
+      $("reportsPerMonth").value = 89;
+      $("userCount").value = 1;
+
+      $("m_mb2").value = 8;
+      $("m_filter").value = 7;
+      $("m_match").value = 6;
+      $("m_format").value = 4;
+
+      $("w_mb2").value = 1.5;
+      $("w_compute").value = 0.5;
+      $("w_review").value = 0.3;
+      $("w_export").value = 0.2;
+
+      computeSavings();
+    }
+
+    /* ========== EVENTS (ONE TIME ONLY) ========== */
+    document.addEventListener("DOMContentLoaded", () => {
+
+      $("monthFilter").addEventListener("change", compute);
+      $("statusFilter").addEventListener("change", compute);
+
+      $("btnExport").addEventListener("click", exportExcelStyled);
+      $("btnClear").addEventListener("click", clearAgeing);
+
+      $("btnCalc").addEventListener("click", () => toggleCalculator(true));
+      $("btnCalcClose").addEventListener("click", () => toggleCalculator(false));
+      $("btnResetCalc").addEventListener("click", resetCalc);
+
+      [
+        "hourlyRate","reportsPerMonth","userCount",
+        "m_mb2","m_filter","m_match","m_format",
+        "w_mb2","w_compute","w_review","w_export"
+      ].forEach(id => $(id).addEventListener("input", computeSavings));
+
+      computeSavings();
+    });
+
+    /* ========== FILE UPLOAD ========== */
+    $("fileInput").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      const fr = new FileReader();
+      fr.onload = (ev) => {
+        const wb = XLSX.read(ev.target.result, { type:"array" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const raw = XLSX.utils.sheet_to_json(sheet, { defval:"" });
+
+        const GR103_USERS = ["SMI.SGL","SMI.JAA3","SMI.MM"];
+        GR103 = raw.filter(r =>
+          String(r["Movement type"]).trim() === "103" &&
+          GR103_USERS.includes(String(r["User Name"]).trim())
+        );
+        GR104 = raw.filter(r => String(r["Movement type"]).trim() === "104");
+        GR105 = raw.filter(r => String(r["Movement type"]).trim() === "105");
+
+        buildMonthFilter();
+        $("monthFilter").value = "ALL";
+        $("statusFilter").value = "ALL";
+        compute();
+      };
+      fr.readAsArrayBuffer(file);
+    });
+  </script>
+</body>
+</html>
