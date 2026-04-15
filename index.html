@@ -346,6 +346,678 @@
     grid-template-columns: 1fr;
   }
 }
+#calcPanel .card.flat{
+  padding:12px;
+}
+
+#calcPanel input{
+  padding:8px 10px;
+}
+
+#calcPanel .kpi{
+  padding:10px;
+}
+/* ===== Calculator field label bar (WORDING) ===== */
+#calcPanel .field{
+  margin-top:10px;
+}
+#calcPanel .field-title{
+  font-size:11px;
+  font-weight:900;
+  letter-spacing:.4px;
+  color:#eaf2ff;
+  margin:0 auto 6px;
+  width:90%;
+  max-width:260px;
+  padding:6px 10px;
+  border-radius:12px;
+  background: rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.18);
+}
+
+/* ===== One-row calculator on desktop ===== */
+#calcPanel .calcGrid{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(260px, 1fr));
+  gap:12px;
+  align-items:stretch;
+}
+#calcPanel .card.flat{ height:100%; }
+
+/* Responsive: tablet 2 columns */
+@media (max-width: 1200px){
+  #calcPanel .calcGrid{ grid-template-columns: repeat(2, minmax(260px, 1fr)); }
+}
+
+/* Mobile: 1 column */
+@media (max-width: 650px){
+  #calcPanel .calcGrid{ grid-template-columns: 1fr; }
+}
+#calcPanel .calcSectionTitle{
+  width:93%;
+  padding:10px 12px;
+  border-radius:14px;
+  background:#ffffff;
+  color:#0b4aa8;
+  font-weight:1000;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+  margin:0 0 10px 0;
+  text-align:center;
+  box-shadow:0 8px 18px rgba(0,0,0,.20);
+}
+/* ===== RESULTS HINT BOXES: BIGGER + 70% WIDTH + BOLD VALUES ===== */
+#calcPanel .card.flat .hint{
+  width:70%;
+  margin:10px auto;
+  padding:10px 12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.16);
+  border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 10px 22px rgba(0,0,0,.22);
+
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+
+  font-size:13px;
+  font-weight:900;
+  color:#eaf2ff;
+  line-height:1.2;
+}
+
+/* Make the value VERY visible */
+#calcPanel .card.flat .hint b{
+  font-size:18px;
+  font-weight:1100;
+  color:#ffffff;
+  letter-spacing:.3px;
+  text-shadow:0 2px 8px rgba(0,0,0,.35);
+}
+
+/* Mobile: use full width */
+@media (max-width: 650px){
+  #calcPanel .card.flat .hint{
+    width:100%;
+  }
+}
+
+  </style>
+</head>
+
+<body>
+  <header class="fas-header">
+    <div class="fas-header-inner">
+      <div class="fas-title-box">
+        <div class="fas-title-text">FAS-ICP AGEING REPORT</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- ✅ CONTROLS (UPLOAD / EXPORT / CLEAR / CALCULATOR) -->
+    <div class="controls">
+      <input type="file" id="fileInput" />
+
+      <select id="monthFilter">
+        <option value="ALL">ALL MONTHS</option>
+      </select>
+
+      <select id="statusFilter">
+        <option value="ALL">ALL STATUS</option>
+        <option value="OPEN">OPEN</option>
+        <option value="CLOSED">CLOSED</option>
+      </select>
+
+      <button type="button" id="btnExport">Export</button>
+      <button type="button" id="btnClear">Clear</button>
+      <button type="button" id="btnCalc">Calculator</button>
+    </div>
+
+<!-- ✅ DASHBOARD (Desktop 4 columns / 2 rows, Mobile 1 column) -->
+<section class="dash4">
+  <div class="dash4-grid">
+
+    <!-- ROW 1 -->
+    <div class="dash4-card dash4-titleOnly">
+      <div class="dash4-titleBig">AVERAGE AGEING<br/>DAYS</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">TOTAL OPEN LINE ITEMS</div>
+      <div class="dash4-value" id="openCnt">0</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">TOTAL CLOSED LINE ITEMS</div>
+      <div class="dash4-value" id="closedCnt">0</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">0–30 DAYS</div>
+      <div class="dash4-value" id="b30">0</div>
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="dash4-card dash4-greenOnly">
+      <div class="dash4-greenValue" id="avgAge">0</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">% OPEN</div>
+      <div class="dash4-value" id="openPct">0%</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">% CLOSED</div>
+      <div class="dash4-value" id="closedPct">0%</div>
+    </div>
+
+    <div class="dash4-card">
+      <div class="dash4-title">31–60 DAYS</div>
+      <div class="dash4-value" id="b60">0</div>
+    </div>
+
+  </div>
+</section>
+
+
+
+    <!-- ✅ CALCULATOR PANEL -->
+    <!-- ✅ CALCULATOR PANEL (NEAT + WORDING + AUTO COMPUTE READY) -->
+<section class="hidden" id="calcPanel">
+  <div class="calc-header">
+    <h3 class="calc-title">COSTING &amp; SAVINGS CALCULATOR</h3>
+    <button class="calc-close-btn" id="btnCalcClose">Close</button>
+  </div>
+
+  <div class="calcGrid">
+
+    <!-- INPUTS -->
+    <div class="card flat">
+      <div class="calcSectionTitle">INPUTS</div>
+
+
+      <div class="field">
+        <div class="field-title">Hourly Rate (₱/hour)</div>
+        <input type="number" id="hourlyRate" value="0" min="0" step="1">
+      </div>
+
+      <div class="field">
+        <div class="field-title">Report Frequency (reports / month)</div>
+        <input type="number" id="reportsPerMonth" value="0" min="0" step="1">
+      </div>
+
+      <div class="field">
+        <div class="field-title">User Count</div>
+        <input type="number" id="userCount" value="0" min="0" step="1">
+      </div>
+
+      <div class="calc-instruction">
+        Edit hourly rate, step timings, and report frequency (per month)
+      </div>
+
+      <div class="hint">Tip: Change any value; results update automatically</div>
+    </div>
+
+    <!-- MANUAL -->
+    <div class="card flat">
+<div class="calcSectionTitle">MANUAL TIME PER PROCEDURE (minutes)</div>
+      
+      <div class="field">
+        <div class="field-title">MB51 Generate + Export File</div>
+        <input type="number" id="m_mb2" value="0" min="0" step="0.1">
+      </div>
+
+      <div class="field">
+        <div class="field-title">Filtering (103 / 104 / 105 + Users)</div>
+        <input type="number" id="m_filter" value="0" min="0" step="0.1">
+      </div>
+
+      <div class="field">
+        <div class="field-title">Matching (103 vs 105)</div>
+        <input type="number" id="m_match" value="0" min="0" step="0.1">
+      </div>
+
+      <div class="field">
+        <div class="field-title">Formatting / Finalizing</div>
+        <input type="number" id="m_format" value="0" min="0" step="0.1">
+      </div>
+
+      <div class="kpi">
+        <h4>Total Manual Minutes</h4>
+        <b id="manualTotalMin">0.0</b>
+      </div>
+    </div>
+
+    <!-- WEB -->
+    <div class="card flat">
+  <div class="calcSectionTitle">WEB-BASED TIME PER PROCEDURE (minutes)</div>
+
+      <div class="field">
+        <div class="field-title">MB51 Generate + Export (SAP)</div>
+        <input type="number" id="w_mb2" value="0" min="0" step="0.1">
+      </div>
+
+      <div class="field">
+        <div class="field-title">Upload + Validation + Compute</div>
+        <input type="number" id="w_compute" value="0" min="0" step="0.1">
+      </div>
+
+      <div class="field">
+        <div class="field-title">Filtering / Review</div>
+        <input type="number" id="w_review" value="0" min="0" step="0.1">
+      </div>
+
+      <div class="field">
+        <div class="field-title">Excel Export</div>
+        <input type="number" id="w_export" value="0" min="0" step="0.1">
+      </div>
+
+      <div class="kpi">
+        <h4>Total Web Minutes</h4>
+        <b id="webTotalMin">0.0</b>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="card flat">
+    <div class="calcSectionTitle">RESULTS</div>
+
+      <div class="hint">Cost per minute: <b id="costPerMin">₱0.00</b></div>
+      <div class="hint">Manual cost / report: <b id="manualCost">₱0.00</b></div>
+      <div class="hint">Web cost / report: <b id="webCost">₱0.00</b></div>
+
+      <div class="calc-savings-main">
+        <div class="label">Savings / Report</div>
+        <div class="value" id="savePerReport">₱0.00</div>
+      </div>
+
+      <div class="summary" style="margin-top:12px">
+        <div class="calc-savings-sub">
+          <div class="label">Monthly Savings</div>
+          <div class="value" id="saveMonthly">₱0.00</div>
+        </div>
+        <div class="calc-savings-sub">
+          <div class="label">Yearly Savings</div>
+          <div class="value" id="saveYearly">₱0.00</div>
+        </div>
+      </div>
+
+      <button class="calc-reset-btn" id="btnResetCalc">Reset Defaults</button>
+    </div>
+
+  </div>
+</section>
+
+
+    <!-- ✅ TABLE -->
+    <div class="table-wrap">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Plant</th>
+            <th>Purchase order</th>
+            <th>Material</th>
+            <th>Description</th>
+            <th>Qty</th>
+            <th>UoM</th>
+            <th>Material Document (103)</th>
+            <th>Posting Date (103)</th>
+            <th>Material Document (105)</th>
+            <th>Posting Date (105)</th>
+            <th>Age</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+  </div><!-- /container -->
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    function toDate(v){
+      if (!v) return null;
+      if (typeof v === "number") return new Date((v - 25569) * 86400000);
+      const d = new Date(v);
+      return isNaN(d.getTime()) ? null : d;
+    }
+    const monthKey = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+
+    function col(r, names){
+      for (const n of names) if (r[n] !== undefined && r[n] !== "") return r[n];
+      const map = {};
+      Object.keys(r).forEach(k => map[k.trim().toUpperCase()] = k);
+      for (const n of names){
+        const real = map[n.trim().toUpperCase()];
+        if (real && r[real] !== undefined && r[real] !== "") return r[real];
+      }
+      return "";
+    }
+
+    let GR103 = [], GR104 = [], GR105 = [];
+
+    function has104(r103){
+      const d103 = toDate(r103["Posting Date"]);
+      if (!d103) return false;
+      return GR104.some(r104 =>
+        r104["Plant"] === r103[
+    :root{--blue:#003a8f;--bg:#f4f6fb}
+    body{margin:0;font-family:Arial;background:var(--bg)}
+    .container{max-width:1400px;margin:auto;padding:20px}
+
+    /* ================= CONTROLS ================= */
+    .controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:18px 0}
+    .controls input[type="file"]{
+      padding:10px 14px;border-radius:10px;background:linear-gradient(#1e63d6,#003a8f);
+      color:#fff;font-weight:700;border:none;box-shadow:0 4px 10px rgba(0,0,0,.25);
+    }
+    .controls select,.controls button{
+      padding:10px 18px;border-radius:10px;background:linear-gradient(#1e63d6,#003a8f);
+      color:#fff;font-weight:800;font-size:12px;border:none;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,.25);
+    }
+    .controls select:hover,.controls button:hover{background:linear-gradient(#2b78ff,#004ab8)}
+
+    /* Month filter readability */
+    #monthFilter { font-size:13px; letter-spacing:0.5px; }
+    #monthFilter option { background:#ffffff; color:#003a8f; font-weight:700; }
+    #monthFilter:focus { outline:none; box-shadow:0 0 0 3px rgba(30,99,214,.35); }
+
+    /* ================= SUMMARY ================= */
+    .summary{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+      gap:12px;margin-bottom:16px;
+    }
+    .box{background:#fff;border-radius:10px;padding:14px;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.1)}
+    .box h4{margin:0;color:#6b7280;font-size:12px}
+    .box div{margin-top:6px;font-size:26px;font-weight:700;color:#003a8f}
+
+    /* ================= TABLE ================= */
+    .table-wrap{background:#fff;border-radius:10px;overflow:auto;box-shadow:0 6px 18px rgba(0,0,0,.1)}
+    table{border-collapse:collapse;width:100%;min-width:1200px;font-size:12px}
+    th,td{border:1px solid #d1d5db;padding:6px;text-align:center}
+    th{background:#e6eef9;position:sticky;top:0;color:#111827}
+    td{color:#111827}
+
+    /* Status pill */
+    .status-pill{
+      display:inline-block;
+      padding:4px 10px;
+      border-radius:999px;
+      font-weight:900;
+      letter-spacing:.5px;
+      font-size:11px;
+      border:1px solid rgba(0,0,0,.08);
+      box-shadow:0 2px 8px rgba(0,0,0,.08);
+    }
+    .status-pill.open{background:#ffe1e1;color:#b00020}
+    .status-pill.closed{background:#dff7e6;color:#0b6b2e}
+
+    /* Month tint rows */
+    tr.m-01{ background:#eef6ff; }
+    tr.m-02{ background:#f1edff; }
+    tr.m-03{ background:#e9fff4; }
+    tr.m-04{ background:#fff8e6; }
+    tr.m-05{ background:#fff0e8; }
+    tr.m-06{ background:#ffe9f2; }
+    tr.m-07{ background:#eefcfb; }
+    tr.m-08{ background:#f7f7f7; }
+    tr.m-09{ background:#f0f7ff; }
+    tr.m-10{ background:#f8f0ff; }
+    tr.m-11{ background:#effff1; }
+    tr.m-12{ background:#fff3f3; }
+
+    /* ================= CALCULATOR (FULL BLUE DESIGN) ================= */
+    .hidden{display:none}
+
+    #calcPanel{
+      border-radius:14px;
+      padding:14px;
+      background: linear-gradient(160deg,#1f6fdc 0%, #0b4aa8 60%, #04327a 100%);
+      box-shadow: 0 18px 36px rgba(0,0,0,.35);
+      margin-bottom:16px;
+    }
+
+    .calc-header{
+      position:relative;
+      background: linear-gradient(180deg,#2b7bff,#003a8f);
+      border-radius:14px;
+      padding:16px;
+      margin-bottom:14px;
+      text-align:center;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.25);
+    }
+
+    .calc-title{
+      margin:0;
+      color:#ffffff;
+      font-size:20px;
+      font-weight:1000;
+      letter-spacing:1px;
+    }
+
+    .calc-close-btn{
+      position:absolute;
+      right:12px;
+      top:12px;
+      padding:8px 16px;
+      border-radius:12px;
+      border:none;
+      background:linear-gradient(180deg,#3385ff,#004ab8);
+      color:#ffffff;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:0 8px 20px rgba(0,0,0,.35);
+    }
+    .calc-close-btn:hover{filter:brightness(1.08)}
+
+    .calcGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+
+    #calcPanel .card.flat{
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      border-radius:14px;
+      color:#f8fbff;
+      box-shadow: 0 18px 36px rgba(0,0,0,.22);
+      padding:14px;
+      text-align:center;
+      backdrop-filter: blur(4px);
+    }
+
+    #calcPanel h4{
+      color:#ffffff;
+      font-size:13px;
+      letter-spacing:.7px;
+      margin:0 0 10px;
+    }
+
+    #calcPanel label{
+      display:block;
+      color:#e5efff;
+      font-size:12px;
+      font-weight:800;
+      margin-top:10px;
+    }
+
+    #calcPanel input{
+      width:90%;
+      max-width:260px;
+      background:#ffffff;
+      color:#0b4aa8;
+      font-weight:900;
+      font-size:14px;
+      border-radius:14px;
+      border:none;
+      padding:10px 12px;
+      text-align:center;
+      margin-top:6px;
+      box-shadow:0 6px 18px rgba(0,0,0,.25);
+    }
+
+    #calcPanel .hint{
+      color:#dbeafe;
+      font-size:11px;
+      margin-top:8px;
+    }
+
+    #calcPanel .kpi{
+      background: rgba(255,255,255,.16);
+      border-radius: 14px;
+      padding: 12px;
+      margin-top:12px;
+      border:1px solid rgba(255,255,255,.16);
+    }
+
+    #calcPanel .kpi b{
+      color:#ffffff;
+      font-size:22px;
+      font-weight:1000;
+    }
+
+    .calc-instruction{
+      margin-top:12px;
+      padding:10px 14px;
+      background:#ffffff;
+      color:#0b4aa8;
+      font-size:12px;
+      font-style:italic;
+      font-weight:800;
+      border-radius:14px;
+      text-align:center;
+      box-shadow:0 8px 18px rgba(0,0,0,.25);
+    }
+
+    .calc-savings-main{
+      background: linear-gradient(180deg, #2b7bff, #003a8f);
+      border-radius: 18px;
+      padding: 16px;
+      margin-top:14px;
+      box-shadow:0 12px 26px rgba(0,0,0,.35);
+    }
+    .calc-savings-main .label{ color:#e0ecff; font-weight:900 }
+    .calc-savings-main .value{ color:#ffffff; font-size:34px; font-weight:1000 }
+
+    .calc-savings-sub{
+      background: rgba(255,255,255,.14);
+      border-radius: 16px;
+      padding: 14px;
+      border:1px solid rgba(255,255,255,.18);
+    }
+    .calc-savings-sub .label{ color:#c7dcff; font-weight:900 }
+    .calc-savings-sub .value{ color:#ffffff; font-size:20px; font-weight:1000 }
+
+    .calc-reset-btn{
+      width:100%;
+      margin-top:14px;
+      padding:14px;
+      border-radius:16px;
+      font-size:16px;
+      font-weight:1000;
+      color:#fff;
+      border:none;
+      cursor:pointer;
+      background:linear-gradient(180deg,#3385ff,#004ab8);
+      box-shadow:0 10px 24px rgba(0,0,0,.35);
+    }
+    .calc-reset-btn:hover{filter:brightness(1.08)}
+
+/* ===== DASHBOARD: Desktop 4 columns (2 rows), Mobile 1 column ===== */
+.dash4{
+  margin:12px 0 16px;
+}
+
+.dash4-grid{
+  display:grid;
+  grid-template-columns: repeat(4, 1fr);  /* ✅ 4 columns desktop */
+  gap:14px;                                /* not too wide */
+}
+
+/* card sizing - smaller, not oversized */
+.dash4-card{
+  background:#ffffff;
+  border-radius:14px;                      /* smaller radius */
+  padding:14px 12px;                       /* smaller padding */
+  border:1px solid rgba(15,23,42,.06);
+  box-shadow:0 10px 22px rgba(0,0,0,.10);
+  text-align:center;
+  min-height:92px;                         /* not too tall */
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+
+.dash4-title{
+  font-size:11px;
+  font-weight:900;
+  color:#64748b;
+  letter-spacing:.7px;
+  text-transform:uppercase;
+}
+
+.dash4-value{
+  margin-top:8px;
+  font-size:34px;                          /* smaller number */
+  font-weight:1000;
+  color:#1e3a8a;
+}
+
+/* Top-left: text only */
+.dash4-titleOnly .dash4-titleBig{
+  font-size:22px;                          /* smaller than before */
+  font-weight:1100;
+  color:#1e3a8a;
+  letter-spacing:.8px;
+  line-height:1.05;
+}
+
+/* Green value: number only */
+.dash4-greenOnly .dash4-greenValue{
+  font-size:60px;                          /* smaller green number */
+  font-weight:1200;
+  color:#22c55e;
+  letter-spacing:1px;
+}
+
+/* ✅ Mobile: 1 column only */
+@media (max-width: 720px){
+  .dash4-grid{
+    grid-template-columns: 1fr;
+  }
+}
+/* ===========================
+   CALCULATOR: ONE ROW (DESKTOP)
+   =========================== */
+#calcPanel .calcGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(260px, 1fr));
+  /* 4 cards in one row */
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* Make cards same height */
+#calcPanel .card.flat {
+  height: 100%;
+}
+
+/* Responsive: tablet -> 2 columns */
+@media (max-width: 1200px) {
+  #calcPanel .calcGrid {
+    grid-template-columns: repeat(2, minmax(260px, 1fr));
+  }
+}
+
+/* Mobile -> 1 column */
+@media (max-width: 650px) {
+  #calcPanel .calcGrid {
+    grid-template-columns: 1fr;
+  }
+}
   </style>
 </head>
 
